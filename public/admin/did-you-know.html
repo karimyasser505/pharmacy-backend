@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة هل تعلم - لوحة التحكم</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f3a 50%, #2d1b69 100%);
+            color: white;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .admin-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff, #0ea5e9, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+        
+        .did-you-know-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+        
+        .did-you-know-card {
+            background: linear-gradient(145deg, 
+                rgba(255, 255, 255, 0.08) 0%, 
+                rgba(255, 255, 255, 0.03) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .did-you-know-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .did-you-know-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0ea5e9;
+        }
+        
+        .did-you-know-content {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .did-you-know-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .did-you-know-category {
+            background: rgba(14, 165, 233, 0.2);
+            color: #0ea5e9;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .did-you-know-status {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .did-you-know-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #1a1f3a, #2d1b69);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #0ea5e9;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #0ea5e9;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+        }
+        
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .message.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .message.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 1rem;
+            }
+            
+            .admin-header h1 {
+                font-size: 2rem;
+            }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
+            
+            .did-you-know-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>إدارة هل تعلم</h1>
+            <p>إدارة معلومات "هل تعلم" المثيرة والمفيدة</p>
+        </div>
+        
+        <div class="admin-actions">
+            <button class="btn btn-primary" onclick="showAddDidYouKnowModal()">
+                ➕ إضافة معلومة جديدة
+            </button>
+            <a href="jobs-announcements.html" class="btn btn-secondary">
+                ← العودة للوحة التحكم
+            </a>
+        </div>
+        
+        <div id="messageContainer"></div>
+        
+        <div id="didYouKnowContainer">
+            <div class="loading">جاري تحميل المعلومات...</div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Modal -->
+    <div id="didYouKnowModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">إضافة معلومة جديدة</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="didYouKnowForm">
+                <div class="form-group">
+                    <label for="title">العنوان *</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">المحتوى *</label>
+                    <textarea id="content" name="content" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">الفئة *</label>
+                    <select id="category" name="category" required>
+                        <option value="">اختر الفئة</option>
+                        <option value="صيدلة">صيدلة</option>
+                        <option value="طب">طب</option>
+                        <option value="أدوية">أدوية</option>
+                        <option value="تاريخ">تاريخ</option>
+                        <option value="علم">علم</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="image_url">رابط الصورة (اختياري)</label>
+                    <input type="url" id="image_url" name="image_url">
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">الحالة</label>
+                    <select id="status" name="status">
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let allDidYouKnow = [];
+        let editingId = null;
+        
+        // Load did you know on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDidYouKnow();
+        });
+        
+        // Load all did you know
+        async function loadDidYouKnow() {
+            const container = document.getElementById('didYouKnowContainer');
+            container.innerHTML = '<div class="loading">جاري تحميل المعلومات...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/did-you-know`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allDidYouKnow = data.data;
+                    displayDidYouKnow();
+                } else {
+                    container.innerHTML = '<div class="no-data">فشل في تحميل المعلومات</div>';
+                }
+            } catch (error) {
+                console.error('Error loading did you know:', error);
+                container.innerHTML = '<div class="no-data">فشل في تحميل المعلومات</div>';
+            }
+        }
+        
+        // Display did you know
+        function displayDidYouKnow() {
+            const container = document.getElementById('didYouKnowContainer');
+            
+            if (allDidYouKnow.length === 0) {
+                container.innerHTML = '<div class="no-data">لا توجد معلومات متاحة</div>';
+                return;
+            }
+            
+            const html = allDidYouKnow.map(item => `
+                <div class="did-you-know-card">
+                    <h3 class="did-you-know-title">${item.title}</h3>
+                    <div class="did-you-know-content">${item.content}</div>
+                    <div class="did-you-know-meta">
+                        <span class="did-you-know-category">${item.category}</span>
+                        <span class="did-you-know-status">${item.status === 'active' ? 'نشط' : 'غير نشط'}</span>
+                    </div>
+                    <div class="did-you-know-actions">
+                        <button class="btn btn-primary btn-small" onclick="editDidYouKnow(${item.id})">تعديل</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteDidYouKnow(${item.id})">حذف</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `<div class="did-you-know-grid">${html}</div>`;
+        }
+        
+        // Show add modal
+        function showAddDidYouKnowModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'إضافة معلومة جديدة';
+            document.getElementById('didYouKnowForm').reset();
+            document.getElementById('didYouKnowModal').style.display = 'block';
+        }
+        
+        // Edit did you know
+        function editDidYouKnow(id) {
+            const item = allDidYouKnow.find(item => item.id === id);
+            if (!item) return;
+            
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'تعديل المعلومة';
+            document.getElementById('title').value = item.title;
+            document.getElementById('content').value = item.content;
+            document.getElementById('category').value = item.category;
+            document.getElementById('image_url').value = item.image_url || '';
+            document.getElementById('status').value = item.status;
+            document.getElementById('didYouKnowModal').style.display = 'block';
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('didYouKnowModal').style.display = 'none';
+            editingId = null;
+        }
+        
+        // Handle form submission
+        document.getElementById('didYouKnowForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                category: document.getElementById('category').value,
+                image_url: document.getElementById('image_url').value,
+                status: document.getElementById('status').value
+            };
+            
+            try {
+                let response;
+                if (editingId) {
+                    response = await fetch(`${API_BASE}/did-you-know/${editingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/did-you-know`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    closeModal();
+                    loadDidYouKnow();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving did you know:', error);
+                showMessage('خطأ في حفظ المعلومة', 'error');
+            }
+        });
+        
+        // Delete did you know
+        async function deleteDidYouKnow(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه المعلومة؟')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/did-you-know/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    loadDidYouKnow();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting did you know:', error);
+                showMessage('خطأ في حذف المعلومة', 'error');
+            }
+        }
+        
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Close modal on outside click
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('didYouKnowModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

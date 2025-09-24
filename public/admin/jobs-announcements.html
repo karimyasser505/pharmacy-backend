@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الوظائف والإعلانات - لوحة التحكم</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-header h2 {
+            color: #00d4ff;
+            font-size: 1.8rem;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #1a1a1a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+        }
+
+        .data-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #1a1a1a;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-header .table-row {
+            font-weight: 600;
+            background: transparent;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.inactive {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #2d2d2d 0%, #1a1a1a 100%);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h3 {
+            color: #00d4ff;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #00d4ff;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .array-input {
+            margin-top: 10px;
+        }
+
+        .array-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .array-item input {
+            flex: 1;
+        }
+
+        .remove-item {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .add-item {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .table-header .table-row {
+                display: none;
+            }
+
+            .table-row::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #00d4ff;
+                margin-bottom: 5px;
+            }
+
+            .actions {
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 إدارة الوظائف والإعلانات</h1>
+            <p>إدارة شاملة لفرص التوظيف والإعلانات في كلية الصيدلة</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('jobs')">💼 الوظائف</div>
+            <div class="tab" onclick="switchTab('announcements')">📢 الإعلانات</div>
+        </div>
+
+        <!-- Jobs Section -->
+        <div id="jobs-content" class="content active">
+            <div class="section-header">
+                <h2>💼 إدارة الوظائف</h2>
+                <button class="btn btn-primary" onclick="openJobModal()">➕ إضافة وظيفة جديدة</button>
+            </div>
+            <div id="jobs-table" class="data-table">
+                <div class="loading">جاري تحميل الوظائف...</div>
+            </div>
+        </div>
+
+        <!-- Announcements Section -->
+        <div id="announcements-content" class="content">
+            <div class="section-header">
+                <h2>📢 إدارة الإعلانات</h2>
+                <button class="btn btn-primary" onclick="openAnnouncementModal()">➕ إضافة إعلان جديد</button>
+            </div>
+            <div id="announcements-table" class="data-table">
+                <div class="loading">جاري تحميل الإعلانات...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Modal -->
+    <div id="job-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="job-modal-title">إضافة وظيفة جديدة</h3>
+                <button class="close-btn" onclick="closeJobModal()">&times;</button>
+            </div>
+            <form id="job-form">
+                <input type="hidden" id="job-id">
+                
+                <div class="form-group">
+                    <label for="job-title">عنوان الوظيفة *</label>
+                    <input type="text" id="job-title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-type">نوع العمل *</label>
+                    <select id="job-type" required>
+                        <option value="دوام كامل">دوام كامل</option>
+                        <option value="دوام جزئي">دوام جزئي</option>
+                        <option value="عقد مؤقت">عقد مؤقت</option>
+                        <option value="عمل عن بُعد">عمل عن بُعد</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-salary">الراتب *</label>
+                    <input type="text" id="job-salary" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-deadline">آخر موعد للتقديم *</label>
+                    <input type="text" id="job-deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-experience">الخبرة المطلوبة *</label>
+                    <input type="text" id="job-experience" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-qualification">المؤهل المطلوب *</label>
+                    <input type="text" id="job-qualification" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-description">وصف الوظيفة *</label>
+                    <textarea id="job-description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>المتطلبات</label>
+                    <div id="job-requirements" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="متطلب جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('job-requirements')">إضافة متطلب</button>
+                </div>
+
+                <div class="form-group">
+                    <label>المميزات</label>
+                    <div id="job-benefits" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="ميزة جديدة">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('job-benefits')">إضافة ميزة</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="job-status">الحالة</label>
+                    <select id="job-status">
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="closed">مغلق</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeJobModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div id="announcement-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="announcement-modal-title">إضافة إعلان جديد</h3>
+                <button class="close-btn" onclick="closeAnnouncementModal()">&times;</button>
+            </div>
+            <form id="announcement-form">
+                <input type="hidden" id="announcement-id">
+                
+                <div class="form-group">
+                    <label for="announcement-title">عنوان الإعلان *</label>
+                    <input type="text" id="announcement-title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-type">نوع الإعلان *</label>
+                    <select id="announcement-type" required>
+                        <option value="مهم">مهم</option>
+                        <option value="ورشة عمل">ورشة عمل</option>
+                        <option value="تطوع">تطوع</option>
+                        <option value="مسابقة">مسابقة</option>
+                        <option value="عام">عام</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-date">التاريخ *</label>
+                    <input type="text" id="announcement-date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-deadline">آخر موعد</label>
+                    <input type="text" id="announcement-deadline">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-level">المستوى</label>
+                    <input type="text" id="announcement-level">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-location">المكان</label>
+                    <input type="text" id="announcement-location">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-duration">المدة</label>
+                    <input type="text" id="announcement-duration">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-field">المجال</label>
+                    <input type="text" id="announcement-field">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-prize">الجائزة</label>
+                    <input type="text" id="announcement-prize">
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-description">الوصف المختصر *</label>
+                    <textarea id="announcement-description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-details">التفاصيل الكاملة *</label>
+                    <textarea id="announcement-details" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>المتطلبات</label>
+                    <div id="announcement-requirements" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="متطلب جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-requirements')">إضافة متطلب</button>
+                </div>
+
+                <div class="form-group">
+                    <label>المميزات</label>
+                    <div id="announcement-benefits" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="ميزة جديدة">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-benefits')">إضافة ميزة</button>
+                </div>
+
+                <div class="form-group">
+                    <label>المواضيع</label>
+                    <div id="announcement-topics" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="موضوع جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-topics')">إضافة موضوع</button>
+                </div>
+
+                <div class="form-group">
+                    <label>المحاضرون</label>
+                    <div id="announcement-speakers" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="محاضر جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-speakers')">إضافة محاضر</button>
+                </div>
+
+                <div class="form-group">
+                    <label>الأنشطة</label>
+                    <div id="announcement-activities" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="نشاط جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-activities')">إضافة نشاط</button>
+                </div>
+
+                <div class="form-group">
+                    <label>الجوائز</label>
+                    <div id="announcement-prizes" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="جائزة جديدة">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-prizes')">إضافة جائزة</button>
+                </div>
+
+                <div class="form-group">
+                    <label>معايير التقييم</label>
+                    <div id="announcement-criteria" class="array-input">
+                        <div class="array-item">
+                            <input type="text" placeholder="معيار جديد">
+                            <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" onclick="addArrayItem('announcement-criteria')">إضافة معيار</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="announcement-status">الحالة</label>
+                    <select id="announcement-status">
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="expired">منتهي الصلاحية</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAnnouncementModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'jobs';
+        let jobs = [];
+        let announcements = [];
+
+        // Switch tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`${tab}-content`).classList.add('active');
+            
+            // Load data
+            if (tab === 'jobs') {
+                loadJobs();
+            } else {
+                loadAnnouncements();
+            }
+        }
+
+        // Load jobs
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/jobs/admin/all');
+                const data = await response.json();
+                
+                if (data.success) {
+                    jobs = data.data;
+                    renderJobsTable();
+                } else {
+                    showError('خطأ في تحميل الوظائف: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        }
+
+        // Load announcements
+        async function loadAnnouncements() {
+            try {
+                const response = await fetch('/api/announcements/admin/all');
+                const data = await response.json();
+                
+                if (data.success) {
+                    announcements = data.data;
+                    renderAnnouncementsTable();
+                } else {
+                    showError('خطأ في تحميل الإعلانات: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        }
+
+        // Render jobs table
+        function renderJobsTable() {
+            const container = document.getElementById('jobs-table');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = '<div class="loading">لا توجد وظائف</div>';
+                return;
+            }
+
+            let html = `
+                <div class="table-header">
+                    <div class="table-row">
+                        <div>العنوان</div>
+                        <div>النوع</div>
+                        <div>الراتب</div>
+                        <div>الحالة</div>
+                        <div>الإجراءات</div>
+                    </div>
+                </div>
+            `;
+
+            jobs.forEach(job => {
+                html += `
+                    <div class="table-row" data-label="العنوان: ${job.title}">
+                        <div>${job.title}</div>
+                        <div>${job.type}</div>
+                        <div>${job.salary}</div>
+                        <div><span class="status ${job.status}">${job.status}</span></div>
+                        <div class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="editJob(${job.id})">تعديل</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteJob(${job.id})">حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Render announcements table
+        function renderAnnouncementsTable() {
+            const container = document.getElementById('announcements-table');
+            
+            if (announcements.length === 0) {
+                container.innerHTML = '<div class="loading">لا توجد إعلانات</div>';
+                return;
+            }
+
+            let html = `
+                <div class="table-header">
+                    <div class="table-row">
+                        <div>العنوان</div>
+                        <div>النوع</div>
+                        <div>التاريخ</div>
+                        <div>الحالة</div>
+                        <div>الإجراءات</div>
+                    </div>
+                </div>
+            `;
+
+            announcements.forEach(announcement => {
+                html += `
+                    <div class="table-row" data-label="العنوان: ${announcement.title}">
+                        <div>${announcement.title}</div>
+                        <div>${announcement.type}</div>
+                        <div>${announcement.date}</div>
+                        <div><span class="status ${announcement.status}">${announcement.status}</span></div>
+                        <div class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="editAnnouncement(${announcement.id})">تعديل</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${announcement.id})">حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Job modal functions
+        function openJobModal(jobId = null) {
+            const modal = document.getElementById('job-modal');
+            const title = document.getElementById('job-modal-title');
+            const form = document.getElementById('job-form');
+            
+            if (jobId) {
+                const job = jobs.find(j => j.id === jobId);
+                if (job) {
+                    title.textContent = 'تعديل الوظيفة';
+                    document.getElementById('job-id').value = job.id;
+                    document.getElementById('job-title').value = job.title;
+                    document.getElementById('job-type').value = job.type;
+                    document.getElementById('job-salary').value = job.salary;
+                    document.getElementById('job-deadline').value = job.deadline;
+                    document.getElementById('job-experience').value = job.experience;
+                    document.getElementById('job-qualification').value = job.qualification;
+                    document.getElementById('job-description').value = job.description;
+                    document.getElementById('job-status').value = job.status;
+                    
+                    // Set requirements
+                    setArrayInput('job-requirements', job.requirements || []);
+                    setArrayInput('job-benefits', job.benefits || []);
+                }
+            } else {
+                title.textContent = 'إضافة وظيفة جديدة';
+                form.reset();
+                setArrayInput('job-requirements', []);
+                setArrayInput('job-benefits', []);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeJobModal() {
+            document.getElementById('job-modal').classList.remove('active');
+        }
+
+        // Announcement modal functions
+        function openAnnouncementModal(announcementId = null) {
+            const modal = document.getElementById('announcement-modal');
+            const title = document.getElementById('announcement-modal-title');
+            const form = document.getElementById('announcement-form');
+            
+            if (announcementId) {
+                const announcement = announcements.find(a => a.id === announcementId);
+                if (announcement) {
+                    title.textContent = 'تعديل الإعلان';
+                    document.getElementById('announcement-id').value = announcement.id;
+                    document.getElementById('announcement-title').value = announcement.title;
+                    document.getElementById('announcement-type').value = announcement.type;
+                    document.getElementById('announcement-date').value = announcement.date;
+                    document.getElementById('announcement-deadline').value = announcement.deadline || '';
+                    document.getElementById('announcement-level').value = announcement.level || '';
+                    document.getElementById('announcement-location').value = announcement.location || '';
+                    document.getElementById('announcement-duration').value = announcement.duration || '';
+                    document.getElementById('announcement-field').value = announcement.field || '';
+                    document.getElementById('announcement-prize').value = announcement.prize || '';
+                    document.getElementById('announcement-description').value = announcement.description;
+                    document.getElementById('announcement-details').value = announcement.details;
+                    document.getElementById('announcement-status').value = announcement.status;
+                    
+                    // Set array inputs
+                    setArrayInput('announcement-requirements', announcement.requirements || []);
+                    setArrayInput('announcement-benefits', announcement.benefits || []);
+                    setArrayInput('announcement-topics', announcement.topics || []);
+                    setArrayInput('announcement-speakers', announcement.speakers || []);
+                    setArrayInput('announcement-activities', announcement.activities || []);
+                    setArrayInput('announcement-prizes', announcement.prizes || []);
+                    setArrayInput('announcement-criteria', announcement.criteria || []);
+                }
+            } else {
+                title.textContent = 'إضافة إعلان جديد';
+                form.reset();
+                setArrayInput('announcement-requirements', []);
+                setArrayInput('announcement-benefits', []);
+                setArrayInput('announcement-topics', []);
+                setArrayInput('announcement-speakers', []);
+                setArrayInput('announcement-activities', []);
+                setArrayInput('announcement-prizes', []);
+                setArrayInput('announcement-criteria', []);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeAnnouncementModal() {
+            document.getElementById('announcement-modal').classList.remove('active');
+        }
+
+        // Array input functions
+        function addArrayItem(containerId) {
+            const container = document.getElementById(containerId);
+            const item = document.createElement('div');
+            item.className = 'array-item';
+            item.innerHTML = `
+                <input type="text" placeholder="عنصر جديد">
+                <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+            `;
+            container.appendChild(item);
+        }
+
+        function removeArrayItem(button) {
+            button.parentElement.remove();
+        }
+
+        function setArrayInput(containerId, array) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (array.length === 0) {
+                addArrayItem(containerId);
+            } else {
+                array.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'array-item';
+                    itemDiv.innerHTML = `
+                        <input type="text" value="${item}">
+                        <button type="button" class="remove-item" onclick="removeArrayItem(this)">حذف</button>
+                    `;
+                    container.appendChild(itemDiv);
+                });
+            }
+        }
+
+        function getArrayInput(containerId) {
+            const container = document.getElementById(containerId);
+            const inputs = container.querySelectorAll('input');
+            return Array.from(inputs).map(input => input.value).filter(value => value.trim() !== '');
+        }
+
+        // Form submissions
+        document.getElementById('job-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('job-title').value,
+                type: document.getElementById('job-type').value,
+                salary: document.getElementById('job-salary').value,
+                deadline: document.getElementById('job-deadline').value,
+                experience: document.getElementById('job-experience').value,
+                qualification: document.getElementById('job-qualification').value,
+                description: document.getElementById('job-description').value,
+                requirements: getArrayInput('job-requirements'),
+                benefits: getArrayInput('job-benefits'),
+                status: document.getElementById('job-status').value
+            };
+
+            const jobId = document.getElementById('job-id').value;
+            const url = jobId ? `/api/jobs/${jobId}` : '/api/jobs';
+            const method = jobId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(jobId ? 'تم تحديث الوظيفة بنجاح' : 'تم إنشاء الوظيفة بنجاح');
+                    closeJobModal();
+                    loadJobs();
+                } else {
+                    showError('خطأ: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        });
+
+        document.getElementById('announcement-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('announcement-title').value,
+                type: document.getElementById('announcement-type').value,
+                date: document.getElementById('announcement-date').value,
+                deadline: document.getElementById('announcement-deadline').value || null,
+                level: document.getElementById('announcement-level').value || null,
+                location: document.getElementById('announcement-location').value || null,
+                duration: document.getElementById('announcement-duration').value || null,
+                field: document.getElementById('announcement-field').value || null,
+                prize: document.getElementById('announcement-prize').value || null,
+                description: document.getElementById('announcement-description').value,
+                details: document.getElementById('announcement-details').value,
+                requirements: getArrayInput('announcement-requirements'),
+                benefits: getArrayInput('announcement-benefits'),
+                topics: getArrayInput('announcement-topics'),
+                speakers: getArrayInput('announcement-speakers'),
+                activities: getArrayInput('announcement-activities'),
+                prizes: getArrayInput('announcement-prizes'),
+                criteria: getArrayInput('announcement-criteria'),
+                status: document.getElementById('announcement-status').value
+            };
+
+            const announcementId = document.getElementById('announcement-id').value;
+            const url = announcementId ? `/api/announcements/${announcementId}` : '/api/announcements';
+            const method = announcementId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(announcementId ? 'تم تحديث الإعلان بنجاح' : 'تم إنشاء الإعلان بنجاح');
+                    closeAnnouncementModal();
+                    loadAnnouncements();
+                } else {
+                    showError('خطأ: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        });
+
+        // Edit functions
+        function editJob(id) {
+            openJobModal(id);
+        }
+
+        function editAnnouncement(id) {
+            openAnnouncementModal(id);
+        }
+
+        // Delete functions
+        async function deleteJob(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه الوظيفة؟')) return;
+            
+            try {
+                const response = await fetch(`/api/jobs/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('تم حذف الوظيفة بنجاح');
+                    loadJobs();
+                } else {
+                    showError('خطأ: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
+            
+            try {
+                const response = await fetch(`/api/announcements/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('تم حذف الإعلان بنجاح');
+                    loadAnnouncements();
+                } else {
+                    showError('خطأ: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+            }
+        }
+
+        // Utility functions
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.tabs'));
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.querySelector('.container').insertBefore(successDiv, document.querySelector('.tabs'));
+            
+            setTimeout(() => successDiv.remove(), 5000);
+        }
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            loadJobs();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة التحكم | صيدلة المنيا</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-content">
+        <h1><i class="fas fa-cogs"></i> لوحة التحكم</h1>
+        <p>إدارة محتوى موقع صيدلة المنيا</p>
+      </div>
+      <div class="user-info">
+        <div id="userBox" class="user-box">
+          <i class="fas fa-user"></i> <span>تسجيل الدخول</span>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary" style="display: none;">
+          <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </button>
+      </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+      <div class="spinner"></div>
+      <p>جاري التحقق من الحالة...</p>
+    </div>
+
+    <!-- Login Section -->
+    <section id="loginSection" class="auth-section" style="display: none;">
+      <div class="login-card">
+        <div class="login-header">
+          <i class="fas fa-lock login-icon"></i>
+          <h2>تسجيل الدخول</h2>
+          <p>أدخل بيانات الدخول للوصول للوحة التحكم</p>
+        </div>
+        
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="username">
+              <i class="fas fa-user"></i>
+              اسم المستخدم
+            </label>
+            <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">
+              <i class="fas fa-key"></i>
+              كلمة المرور
+            </label>
+            <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" required>
+          </div>
+          
+          <button type="submit" id="loginBtn" class="btn btn-primary btn-block">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>دخول</span>
+          </button>
+        </form>
+        
+      </div>
+    </section>
+
+    <!-- Main App Section -->
+    <section id="appSection" class="app-section" style="display: none;">
+      <!-- Navigation Tabs -->
+      <nav class="tabs">
+        <button data-tab="dashboard" class="tab-btn active">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>الرئيسية</span>
+        </button>
+        <button data-tab="news" class="tab-btn">
+          <i class="fas fa-newspaper"></i>
+          <span>الأخبار</span>
+        </button>
+        <button data-tab="publications" class="tab-btn">
+          <i class="fas fa-book"></i>
+          <span>الأبحاث</span>
+        </button>
+        <button data-tab="lectures" class="tab-btn">
+          <i class="fas fa-chalkboard-teacher"></i>
+          <span>المحاضرات</span>
+        </button>
+        <button data-tab="internships" class="tab-btn">
+          <i class="fas fa-graduation-cap"></i>
+          <span>فرص التدريب</span>
+        </button>
+        <button data-tab="files" class="tab-btn">
+          <i class="fas fa-file-upload"></i>
+          <span>الملفات</span>
+        </button>
+        <button data-tab="jobs" class="tab-btn">
+          <i class="fas fa-briefcase"></i>
+          <span>الوظائف</span>
+        </button>
+        <button data-tab="announcements" class="tab-btn">
+          <i class="fas fa-bullhorn"></i>
+          <span>الإعلانات</span>
+        </button>
+        <button data-tab="did-you-know" class="tab-btn">
+          <i class="fas fa-lightbulb"></i>
+          <span>هل تعلم؟!</span>
+        </button>
+        <button data-tab="pharma-hub" class="tab-btn">
+          <i class="fas fa-question-circle"></i>
+          <span>Pharma Hub</span>
+        </button>
+        <button data-tab="settings" class="tab-btn">
+          <i class="fas fa-cog"></i>
+          <span>الإعدادات</span>
+        </button>
+      </nav>
+
+      <!-- Tab Content -->
+      <div id="tabContent" class="tab-content">
+        <!-- Content will be loaded here dynamically -->
+      </div>
+    </section>
+  </div>
+
+  <!-- Success/Error Message Container -->
+  <div id="messageContainer" class="message-container"></div>
+
+  <!-- Modal Container -->
+  <div id="modalContainer" class="modal-container"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>صيدلة المنيا</h4>
+        <p>كلية الصيدلة - جامعة المنيا</p>
+      </div>
+      <div class="footer-section">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="#dashboard">الرئيسية</a></li>
+          <li><a href="#news">الأخبار</a></li>
+          <li><a href="#publications">الأبحاث</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>تواصل معنا</h4>
+        <p><i class="fas fa-envelope"></i> amal.hussein@mu.edu.eg</p>
+        <p><i class="fas fa-phone"></i> 01092051051</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 جميع الحقوق محفوظة | Designed and Developed by <a href="https://drgaweesh.online" target="_blank" rel="noopener noreferrer">Dr@Gaweesh</a></p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

@@ -13,7 +13,7 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 const { db } = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000; // ✅ خلي الافتراضي 3000 بدل 3001
 
 // Make db available to routes
 app.set('db', db);
@@ -53,9 +53,15 @@ app.use('/test-api.html', express.static(path.join(__dirname, 'test-api.html')))
 // Health check
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
+// ✅ Test route for Railway
+app.get("/", (req, res) => {
+  res.send("✅ Backend running on Railway!");
+});
+
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
   console.log(`Frontend running on http://localhost:${PORT}/`);
   console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
 });
+
 

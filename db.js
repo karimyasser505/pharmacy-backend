@@ -152,7 +152,19 @@ CREATE TABLE IF NOT EXISTS jobs (
   location TEXT,
   type TEXT,
   salary TEXT,
+  deadline TEXT,
   status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  date TEXT,
+  image_url TEXT,
+  published INTEGER DEFAULT 1,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );

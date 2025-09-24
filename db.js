@@ -148,26 +148,45 @@ CREATE TABLE IF NOT EXISTS lectures (
 CREATE TABLE IF NOT EXISTS jobs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  location TEXT,
-  type TEXT,
+  type TEXT NOT NULL,
   salary TEXT,
   deadline TEXT,
+  experience TEXT,
+  qualification TEXT,
+  description TEXT NOT NULL,
+  requirements TEXT,
+  benefits TEXT,
   status TEXT DEFAULT 'active',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+
 CREATE TABLE IF NOT EXISTS announcements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  date TEXT,
-  image_url TEXT,
-  published INTEGER DEFAULT 1,
+  type TEXT NOT NULL,
+  date TEXT NOT NULL,
+  deadline TEXT,
+  level TEXT,
+  location TEXT,
+  duration TEXT,
+  field TEXT,
+  prize TEXT,
+  description TEXT NOT NULL,
+  details TEXT NOT NULL,
+  requirements TEXT,
+  benefits TEXT,
+  topics TEXT,
+  speakers TEXT,
+  activities TEXT,
+  prizes TEXT,
+  criteria TEXT,
+  status TEXT DEFAULT 'active',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
+
 `;
 
 // Helper function to run SQL with promises

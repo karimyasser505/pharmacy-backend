@@ -144,12 +144,24 @@ CREATE TABLE IF NOT EXISTS lectures (
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  location TEXT,
+  type TEXT,
+  salary TEXT,
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
 `;
 
 // Helper function to run SQL with promises
 function runSQL(sql, params = []) {
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve({ lastID: this.lastID, changes: this.changes });
     });
@@ -194,7 +206,7 @@ async function seedAdmin() {
       await runSQL('INSERT INTO users (username, password_hash) VALUES (?, ?)', ['admin', hash]);
       console.log('Seeded default admin user: username="admin" password="admin123" (please change it)');
     }
-    
+
     // Seed sample internships
     const internshipCount = await getSQL('SELECT COUNT(*) as c FROM internships');
     if (internshipCount.c === 0) {
@@ -218,19 +230,9 @@ async function seedAdmin() {
           requirements: 'خريج صيدلة، معرفة بمعايير الجودة، خبرة في المختبرات',
           benefits: 'راتب شهري، تأمين صحي، فرصة للتوظيف الدائم',
           status: 'active'
-        },
-        {
-          title: 'تدريب أبحاث دوائية',
-          type: 'أبحاث دوائية',
-          duration: 'سنة',
-          deadline: '2025-02-28',
-          description: 'تدريب في مجال البحث والتطوير الدوائي مع فريق بحثي متخصص',
-          requirements: 'ماجستير في الصيدلة، معرفة بمنهجيات البحث، خبرة في التحليل',
-          benefits: 'راتب شهري، تأمين صحي، مشاركة في الأبحاث المنشورة',
-          status: 'active'
         }
       ];
-      
+
       for (const internship of sampleInternships) {
         await runSQL(`
           INSERT INTO internships (title, type, duration, deadline, description, requirements, benefits, status)
@@ -240,10 +242,10 @@ async function seedAdmin() {
           internship.description, internship.requirements, internship.benefits, internship.status
         ]);
       }
-      
+
       console.log('Sample internships created');
     }
-    
+
     // Seed sample lectures
     const lectureCount = await getSQL('SELECT COUNT(*) as c FROM lectures');
     if (lectureCount.c === 0) {
@@ -257,29 +259,9 @@ async function seedAdmin() {
           time: '10:00',
           location: 'رابط Zoom: https://zoom.us/j/123456789',
           instructor: 'د. أحمد محمد'
-        },
-        {
-          title: 'ورشة تدريبية في الصيدلة الصناعية',
-          description: 'ورشة عملية حول تقنيات تصنيع الأدوية ومراقبة الجودة في الصناعات الدوائية',
-          type: 'ورشة تدريبية',
-          mode: 'أوفلاين',
-          date: '2025-01-20',
-          time: '14:00',
-          location: 'معمل الصيدلة الصناعية - كلية الصيدلة',
-          instructor: 'د. فاطمة علي'
-        },
-        {
-          title: 'ندوة علمية حول الأدوية الجديدة',
-          description: 'ندوة تفاعلية حول أحدث الأدوية المطورة وطرق استخدامها الآمنة',
-          type: 'ندوة علمية',
-          mode: 'أونلاين',
-          date: '2025-01-25',
-          time: '16:00',
-          location: 'رابط Teams: https://teams.microsoft.com/l/meetup',
-          instructor: 'د. محمد حسن'
         }
       ];
-      
+
       for (const lecture of sampleLectures) {
         await runSQL(`
           INSERT INTO lectures (title, description, type, mode, date, time, location, instructor)
@@ -289,7 +271,7 @@ async function seedAdmin() {
           lecture.date, lecture.time, lecture.location, lecture.instructor
         ]);
       }
-      
+
       console.log('Sample lectures created');
     }
   } catch (err) {

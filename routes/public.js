@@ -13,10 +13,14 @@ function mapRow(row) {
   return mapped;
 }
 
+// News (public)
 router.get('/news', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || '10', 10), 100);
-    const rows = await allSQL('SELECT * FROM news WHERE published = 1 ORDER BY date DESC, id DESC LIMIT ?', [limit]);
+    const rows = await allSQL(
+      'SELECT * FROM news WHERE published = true ORDER BY date DESC, id DESC LIMIT $1',
+      [limit]
+    );
     res.json(rows.map(mapRow));
   } catch (err) {
     console.error('Error fetching news:', err);
@@ -24,6 +28,7 @@ router.get('/news', async (req, res) => {
   }
 });
 
+// Publications
 router.get('/publications', async (req, res) => {
   try {
     const rows = await allSQL('SELECT * FROM publications ORDER BY year DESC, id DESC');
@@ -34,6 +39,7 @@ router.get('/publications', async (req, res) => {
   }
 });
 
+// Lectures
 router.get('/lectures', async (req, res) => {
   try {
     const rows = await allSQL('SELECT * FROM lectures ORDER BY date DESC, id DESC');
@@ -44,6 +50,7 @@ router.get('/lectures', async (req, res) => {
   }
 });
 
+// Graduates
 router.get('/graduates', async (req, res) => {
   try {
     const rows = await allSQL('SELECT * FROM graduates ORDER BY cohort DESC, id DESC');

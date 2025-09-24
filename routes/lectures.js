@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
+const db = require('../db'); // استدعاء db.js الجديد اللي بيشتغل مع PostgreSQL
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -14,21 +15,19 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, 'lecture-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
 const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    },
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: function (req, file, cb) {
         if (file.fieldname === 'pdf' && file.mimetype === 'application/pdf') {
             cb(null, true);
         } else if (file.fieldname !== 'pdf') {
-            cb(null, true); // Allow other fields
+            cb(null, true);
         } else {
             cb(new Error('Only PDF files are allowed for lecture materials'), false);
         }
@@ -36,280 +35,150 @@ const upload = multer({
 });
 
 // Get all lectures
-router.get('/', (req, res) => {
-    const db = req.app.get('db');
-    
-    const query = `
-        SELECT 
-            id,
-            title,
-            description,
-            type,
-            mode,
-            date,
-            time,
-            location,
-            instructor,
-            pdf_path,
-            video_url,
-            created_at,
-            updated_at
-        FROM lectures 
-        ORDER BY date DESC, created_at DESC
+router.get('/', async (req, res) => {
+    try {
+        const query = `
+      SELECT id, title, description, type, mode, date, time, location, instructor,
+             pdf_path, video_url, created_at, updated_at
+      FROM lectures
+      ORDER BY date DESC, created_at DESC
     `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Error fetching lectures:', err);
-            return res.status(500).json({ error: 'Failed to fetch lectures' });
-        }
-        
-        // Convert file paths to URLs
+        const rows = await db.allSQL(query);
+
         const lectures = rows.map(lecture => ({
             ...lecture,
             pdf_url: lecture.pdf_path ? `/uploads/lectures/${path.basename(lecture.pdf_path)}` : null
         }));
-        
+
         res.json(lectures);
-    });
+    } catch (err) {
+        console.error('Error fetching lectures:', err);
+        res.status(500).json({ error: 'Failed to fetch lectures' });
+    }
 });
 
-// Get public lectures (for frontend)
-router.get('/public', (req, res) => {
-    const db = req.app.get('db');
-    
-    const query = `
-        SELECT 
-            id,
-            title,
-            description,
-            type,
-            mode,
-            date,
-            time,
-            location,
-            instructor,
-            pdf_path,
-            video_url,
-            created_at
-        FROM lectures 
-        WHERE 1=1
-        ORDER BY date ASC, time ASC
+// Get public lectures
+router.get('/public', async (req, res) => {
+    try {
+        const query = `
+      SELECT id, title, description, type, mode, date, time, location, instructor,
+             pdf_path, video_url, created_at
+      FROM lectures
+      ORDER BY date ASC, time ASC
     `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Error fetching public lectures:', err);
-            return res.status(500).json({ error: 'Failed to fetch lectures' });
-        }
-        
-        // Convert file paths to URLs
+        const rows = await db.allSQL(query);
+
         const lectures = rows.map(lecture => ({
             ...lecture,
             pdf_url: lecture.pdf_path ? `/uploads/lectures/${path.basename(lecture.pdf_path)}` : null
         }));
-        
+
         res.json(lectures);
-    });
+    } catch (err) {
+        console.error('Error fetching public lectures:', err);
+        res.status(500).json({ error: 'Failed to fetch lectures' });
+    }
 });
 
 // Get single lecture
-router.get('/:id', (req, res) => {
-    const db = req.app.get('db');
-    const { id } = req.params;
-    
-    const query = `
-        SELECT 
-            id,
-            title,
-            description,
-            type,
-            mode,
-            date,
-            time,
-            location,
-            instructor,
-            pdf_path,
-            video_url,
-            created_at,
-            updated_at
-        FROM lectures 
-        WHERE id = ?
+router.get('/:id', async (req, res) => {
+    try {
+        const query = `
+      SELECT id, title, description, type, mode, date, time, location, instructor,
+             pdf_path, video_url, created_at, updated_at
+      FROM lectures
+      WHERE id = $1
     `;
-    
-    db.get(query, [id], (err, row) => {
-        if (err) {
-            console.error('Error fetching lecture:', err);
-            return res.status(500).json({ error: 'Failed to fetch lecture' });
-        }
-        
-        if (!row) {
-            return res.status(404).json({ error: 'Lecture not found' });
-        }
-        
-        // Convert file path to URL
-        const lecture = {
-            ...row,
-            pdf_url: row.pdf_path ? `/uploads/lectures/${path.basename(row.pdf_path)}` : null
-        };
-        
+        const lecture = await db.getSQL(query, [req.params.id]);
+
+        if (!lecture) return res.status(404).json({ error: 'Lecture not found' });
+
+        lecture.pdf_url = lecture.pdf_path ? `/uploads/lectures/${path.basename(lecture.pdf_path)}` : null;
+
         res.json(lecture);
-    });
+    } catch (err) {
+        console.error('Error fetching lecture:', err);
+        res.status(500).json({ error: 'Failed to fetch lecture' });
+    }
 });
 
 // Create new lecture
-router.post('/', upload.single('pdf'), (req, res) => {
-    const db = req.app.get('db');
-    const {
-        title,
-        description,
-        type,
-        mode,
-        date,
-        time,
-        location,
-        instructor,
-        video_url
-    } = req.body;
-    
-    // Validate required fields
+router.post('/', upload.single('pdf'), async (req, res) => {
+    const { title, description, type, mode, date, time, location, instructor, video_url } = req.body;
     if (!title || !description || !type || !mode || !date || !location) {
-        return res.status(400).json({ 
-            error: 'Missing required fields: title, description, type, mode, date, location' 
-        });
+        return res.status(400).json({ error: 'Missing required fields: title, description, type, mode, date, location' });
     }
-    
+
     const pdfPath = req.file ? req.file.path : null;
-    
-    const query = `
-        INSERT INTO lectures (
-            title, description, type, mode, date, time, 
-            location, instructor, pdf_path, video_url, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+
+    try {
+        const query = `
+      INSERT INTO lectures (title, description, type, mode, date, time, location, instructor,
+                            pdf_path, video_url, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+      RETURNING id
     `;
-    
-    const values = [
-        title, description, type, mode, date, time,
-        location, instructor, pdfPath, video_url
-    ];
-    
-    db.run(query, values, function(err) {
-        if (err) {
-            console.error('Error creating lecture:', err);
-            // Clean up uploaded file if database insert fails
-            if (pdfPath && fs.existsSync(pdfPath)) {
-                fs.unlinkSync(pdfPath);
-            }
-            return res.status(500).json({ error: 'Failed to create lecture' });
-        }
-        
-        res.status(201).json({ 
-            id: this.lastID,
-            message: 'Lecture created successfully' 
-        });
-    });
+        const result = await db.runSQL(query, [
+            title, description, type, mode, date, time, location, instructor, pdfPath, video_url
+        ]);
+
+        res.status(201).json({ id: result.rows[0].id, message: 'Lecture created successfully' });
+    } catch (err) {
+        console.error('Error creating lecture:', err);
+        if (pdfPath && fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+        res.status(500).json({ error: 'Failed to create lecture' });
+    }
 });
 
 // Update lecture
-router.put('/:id', upload.single('pdf'), (req, res) => {
-    const db = req.app.get('db');
-    const { id } = req.params;
-    const {
-        title,
-        description,
-        type,
-        mode,
-        date,
-        time,
-        location,
-        instructor,
-        video_url
-    } = req.body;
-    
-    // First, get the current lecture to check for existing PDF
-    const getQuery = 'SELECT pdf_path FROM lectures WHERE id = ?';
-    db.get(getQuery, [id], (err, currentLecture) => {
-        if (err) {
-            console.error('Error fetching current lecture:', err);
-            return res.status(500).json({ error: 'Failed to fetch lecture' });
-        }
-        
-        if (!currentLecture) {
-            return res.status(404).json({ error: 'Lecture not found' });
-        }
-        
+router.put('/:id', upload.single('pdf'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, type, mode, date, time, location, instructor, video_url } = req.body;
+
+        const currentLecture = await db.getSQL('SELECT pdf_path FROM lectures WHERE id = $1', [id]);
+        if (!currentLecture) return res.status(404).json({ error: 'Lecture not found' });
+
         let pdfPath = currentLecture.pdf_path;
-        
-        // If new PDF is uploaded, update the path and delete old file
         if (req.file) {
-            // Delete old PDF if it exists
-            if (pdfPath && fs.existsSync(pdfPath)) {
-                fs.unlinkSync(pdfPath);
-            }
+            if (pdfPath && fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
             pdfPath = req.file.path;
         }
-        
+
         const updateQuery = `
-            UPDATE lectures SET 
-                title = ?, description = ?, type = ?, mode = ?, 
-                date = ?, time = ?, location = ?, instructor = ?, 
-                pdf_path = ?, video_url = ?, updated_at = datetime('now')
-            WHERE id = ?
-        `;
-        
-        const values = [
-            title, description, type, mode, date, time,
-            location, instructor, pdfPath, video_url, id
-        ];
-        
-        db.run(updateQuery, values, function(err) {
-            if (err) {
-                console.error('Error updating lecture:', err);
-                // Clean up new uploaded file if database update fails
-                if (req.file && fs.existsSync(req.file.path)) {
-                    fs.unlinkSync(req.file.path);
-                }
-                return res.status(500).json({ error: 'Failed to update lecture' });
-            }
-            
-            res.json({ message: 'Lecture updated successfully' });
-        });
-    });
+      UPDATE lectures
+      SET title=$1, description=$2, type=$3, mode=$4, date=$5, time=$6,
+          location=$7, instructor=$8, pdf_path=$9, video_url=$10, updated_at=CURRENT_TIMESTAMP
+      WHERE id=$11
+    `;
+        await db.runSQL(updateQuery, [
+            title, description, type, mode, date, time, location, instructor, pdfPath, video_url, id
+        ]);
+
+        res.json({ message: 'Lecture updated successfully' });
+    } catch (err) {
+        console.error('Error updating lecture:', err);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: 'Failed to update lecture' });
+    }
 });
 
 // Delete lecture
-router.delete('/:id', (req, res) => {
-    const db = req.app.get('db');
-    const { id } = req.params;
-    
-    // First, get the lecture to find PDF path
-    const getQuery = 'SELECT pdf_path FROM lectures WHERE id = ?';
-    db.get(getQuery, [id], (err, lecture) => {
-        if (err) {
-            console.error('Error fetching lecture:', err);
-            return res.status(500).json({ error: 'Failed to fetch lecture' });
-        }
-        
-        if (!lecture) {
-            return res.status(404).json({ error: 'Lecture not found' });
-        }
-        
-        // Delete the lecture from database
-        const deleteQuery = 'DELETE FROM lectures WHERE id = ?';
-        db.run(deleteQuery, [id], function(err) {
-            if (err) {
-                console.error('Error deleting lecture:', err);
-                return res.status(500).json({ error: 'Failed to delete lecture' });
-            }
-            
-            // Delete PDF file if it exists
-            if (lecture.pdf_path && fs.existsSync(lecture.pdf_path)) {
-                fs.unlinkSync(lecture.pdf_path);
-            }
-            
-            res.json({ message: 'Lecture deleted successfully' });
-        });
-    });
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lecture = await db.getSQL('SELECT pdf_path FROM lectures WHERE id=$1', [id]);
+        if (!lecture) return res.status(404).json({ error: 'Lecture not found' });
+
+        await db.runSQL('DELETE FROM lectures WHERE id=$1', [id]);
+
+        if (lecture.pdf_path && fs.existsSync(lecture.pdf_path)) fs.unlinkSync(lecture.pdf_path);
+
+        res.json({ message: 'Lecture deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting lecture:', err);
+        res.status(500).json({ error: 'Failed to delete lecture' });
+    }
 });
 
 // Serve uploaded files

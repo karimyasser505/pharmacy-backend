@@ -1,303 +1,210 @@
 const express = require('express');
 const router = express.Router();
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-
-// Create database connection
-const dbPath = path.join(__dirname, '..', '..', 'data', 'app.db');
-const db = new sqlite3.Database(dbPath);
+const { getSQL, allSQL, runSQL } = require('../db');
 
 // Get all announcements
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     console.log('📢 Fetching all announcements...');
-    
-    const query = `
-        SELECT id, title, type, date, deadline, level, location, duration, field, prize,
-               description, details, requirements, benefits, topics, speakers, 
-               activities, prizes, criteria, status, created_at, updated_at
-        FROM announcements 
-        WHERE status = 'active'
-        ORDER BY created_at DESC
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('❌ Error fetching announcements:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في جلب الإعلانات',
-                error: err.message 
-            });
-        }
-        
-        // Parse JSON fields
-        const announcements = rows.map(row => {
-            const announcement = { ...row };
-            
-            // Parse JSON fields if they exist
-            if (row.requirements) announcement.requirements = JSON.parse(row.requirements);
-            if (row.benefits) announcement.benefits = JSON.parse(row.benefits);
-            if (row.topics) announcement.topics = JSON.parse(row.topics);
-            if (row.speakers) announcement.speakers = JSON.parse(row.speakers);
-            if (row.activities) announcement.activities = JSON.parse(row.activities);
-            if (row.prizes) announcement.prizes = JSON.parse(row.prizes);
-            if (row.criteria) announcement.criteria = JSON.parse(row.criteria);
-            
-            return announcement;
-        });
-        
+    try {
+        const rows = await allSQL(`
+      SELECT id, title, type, date, deadline, level, location, duration, field, prize,
+             description, details, requirements, benefits, topics, speakers, 
+             activities, prizes, criteria, status, created_at, updated_at
+      FROM announcements 
+      WHERE status = 'active'
+      ORDER BY created_at DESC
+    `);
+
+        const announcements = rows.map(row => ({
+            ...row,
+            requirements: row.requirements ? JSON.parse(row.requirements) : null,
+            benefits: row.benefits ? JSON.parse(row.benefits) : null,
+            topics: row.topics ? JSON.parse(row.topics) : null,
+            speakers: row.speakers ? JSON.parse(row.speakers) : null,
+            activities: row.activities ? JSON.parse(row.activities) : null,
+            prizes: row.prizes ? JSON.parse(row.prizes) : null,
+            criteria: row.criteria ? JSON.parse(row.criteria) : null
+        }));
+
         console.log(`✅ Found ${announcements.length} announcements`);
-        res.json({ 
-            success: true, 
-            data: announcements,
-            count: announcements.length
-        });
-    });
+        res.json({ success: true, data: announcements, count: announcements.length });
+    } catch (err) {
+        console.error('❌ Error fetching announcements:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في جلب الإعلانات', error: err.message });
+    }
 });
 
 // Get announcement by ID
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
     const announcementId = req.params.id;
     console.log(`📢 Fetching announcement ${announcementId}...`);
-    
-    const query = `
-        SELECT id, title, type, date, deadline, level, location, duration, field, prize,
-               description, details, requirements, benefits, topics, speakers, 
-               activities, prizes, criteria, status, created_at, updated_at
-        FROM announcements 
-        WHERE id = ? AND status = 'active'
-    `;
-    
-    db.get(query, [announcementId], (err, row) => {
-        if (err) {
-            console.error('❌ Error fetching announcement:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في جلب الإعلان',
-                error: err.message 
-            });
-        }
-        
+    try {
+        const row = await getSQL(`
+      SELECT id, title, type, date, deadline, level, location, duration, field, prize,
+             description, details, requirements, benefits, topics, speakers, 
+             activities, prizes, criteria, status, created_at, updated_at
+      FROM announcements 
+      WHERE id = $1 AND status = 'active'
+    `, [announcementId]);
+
         if (!row) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'الإعلان غير موجود' 
-            });
+            return res.status(404).json({ success: false, message: 'الإعلان غير موجود' });
         }
-        
-        // Parse JSON fields
-        const announcement = { ...row };
-        
-        if (row.requirements) announcement.requirements = JSON.parse(row.requirements);
-        if (row.benefits) announcement.benefits = JSON.parse(row.benefits);
-        if (row.topics) announcement.topics = JSON.parse(row.topics);
-        if (row.speakers) announcement.speakers = JSON.parse(row.speakers);
-        if (row.activities) announcement.activities = JSON.parse(row.activities);
-        if (row.prizes) announcement.prizes = JSON.parse(row.prizes);
-        if (row.criteria) announcement.criteria = JSON.parse(row.criteria);
-        
+
+        const announcement = {
+            ...row,
+            requirements: row.requirements ? JSON.parse(row.requirements) : null,
+            benefits: row.benefits ? JSON.parse(row.benefits) : null,
+            topics: row.topics ? JSON.parse(row.topics) : null,
+            speakers: row.speakers ? JSON.parse(row.speakers) : null,
+            activities: row.activities ? JSON.parse(row.activities) : null,
+            prizes: row.prizes ? JSON.parse(row.prizes) : null,
+            criteria: row.criteria ? JSON.parse(row.criteria) : null
+        };
+
         console.log(`✅ Announcement ${announcementId} found`);
-        res.json({ 
-            success: true, 
-            data: announcement
-        });
-    });
-});
-
-// Create new announcement (Admin only)
-router.post('/', (req, res) => {
-    const { 
-        title, type, date, deadline, level, location, duration, field, prize,
-        description, details, requirements, benefits, topics, speakers, 
-        activities, prizes, criteria 
-    } = req.body;
-    
-    console.log('➕ Creating new announcement...');
-    
-    // Validate required fields
-    if (!title || !type || !date || !description || !details) {
-        return res.status(400).json({
-            success: false,
-            message: 'جميع الحقول المطلوبة يجب أن تكون مملوءة'
-        });
+        res.json({ success: true, data: announcement });
+    } catch (err) {
+        console.error('❌ Error fetching announcement:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في جلب الإعلان', error: err.message });
     }
-    
-    const query = `
-        INSERT INTO announcements (title, type, date, deadline, level, location, duration, field, prize,
-                                 description, details, requirements, benefits, topics, speakers, 
-                                 activities, prizes, criteria)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    // Convert arrays to JSON strings
-    const requirementsJson = requirements ? JSON.stringify(requirements) : null;
-    const benefitsJson = benefits ? JSON.stringify(benefits) : null;
-    const topicsJson = topics ? JSON.stringify(topics) : null;
-    const speakersJson = speakers ? JSON.stringify(speakers) : null;
-    const activitiesJson = activities ? JSON.stringify(activities) : null;
-    const prizesJson = prizes ? JSON.stringify(prizes) : null;
-    const criteriaJson = criteria ? JSON.stringify(criteria) : null;
-    
-    db.run(query, [
-        title, type, date, deadline || null, level || null, location || null, 
-        duration || null, field || null, prize || null, description, details,
-        requirementsJson, benefitsJson, topicsJson, speakersJson, 
-        activitiesJson, prizesJson, criteriaJson
-    ], function(err) {
-        if (err) {
-            console.error('❌ Error creating announcement:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في إنشاء الإعلان',
-                error: err.message 
-            });
-        }
-        
-        console.log(`✅ Announcement created with ID: ${this.lastID}`);
-        res.status(201).json({ 
-            success: true, 
-            message: 'تم إنشاء الإعلان بنجاح',
-            data: { id: this.lastID }
-        });
-    });
 });
 
-// Update announcement (Admin only)
-router.put('/:id', (req, res) => {
-    const announcementId = req.params.id;
-    const { 
+// Create new announcement
+router.post('/', async (req, res) => {
+    const {
         title, type, date, deadline, level, location, duration, field, prize,
-        description, details, requirements, benefits, topics, speakers, 
-        activities, prizes, criteria, status 
+        description, details, requirements, benefits, topics, speakers,
+        activities, prizes, criteria
     } = req.body;
-    
-    console.log(`✏️ Updating announcement ${announcementId}...`);
-    
-    const query = `
-        UPDATE announcements 
-        SET title = ?, type = ?, date = ?, deadline = ?, level = ?, location = ?, 
-            duration = ?, field = ?, prize = ?, description = ?, details = ?, 
-            requirements = ?, benefits = ?, topics = ?, speakers = ?, 
-            activities = ?, prizes = ?, criteria = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-    `;
-    
-    // Convert arrays to JSON strings
-    const requirementsJson = requirements ? JSON.stringify(requirements) : null;
-    const benefitsJson = benefits ? JSON.stringify(benefits) : null;
-    const topicsJson = topics ? JSON.stringify(topics) : null;
-    const speakersJson = speakers ? JSON.stringify(speakers) : null;
-    const activitiesJson = activities ? JSON.stringify(activities) : null;
-    const prizesJson = prizes ? JSON.stringify(prizes) : null;
-    const criteriaJson = criteria ? JSON.stringify(criteria) : null;
-    
-    db.run(query, [
-        title, type, date, deadline || null, level || null, location || null, 
-        duration || null, field || null, prize || null, description, details,
-        requirementsJson, benefitsJson, topicsJson, speakersJson, 
-        activitiesJson, prizesJson, criteriaJson, status || 'active', announcementId
-    ], function(err) {
-        if (err) {
-            console.error('❌ Error updating announcement:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في تحديث الإعلان',
-                error: err.message 
-            });
-        }
-        
-        if (this.changes === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'الإعلان غير موجود' 
-            });
-        }
-        
-        console.log(`✅ Announcement ${announcementId} updated successfully`);
-        res.json({ 
-            success: true, 
-            message: 'تم تحديث الإعلان بنجاح'
-        });
-    });
+
+    console.log('➕ Creating new announcement...');
+
+    if (!title || !type || !date || !description || !details) {
+        return res.status(400).json({ success: false, message: 'جميع الحقول المطلوبة يجب أن تكون مملوءة' });
+    }
+
+    try {
+        const result = await runSQL(`
+      INSERT INTO announcements (title, type, date, deadline, level, location, duration, field, prize,
+                                description, details, requirements, benefits, topics, speakers, 
+                                activities, prizes, criteria)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+      RETURNING id
+    `, [
+            title, type, date, deadline || null, level || null, location || null,
+            duration || null, field || null, prize || null, description, details,
+            requirements ? JSON.stringify(requirements) : null,
+            benefits ? JSON.stringify(benefits) : null,
+            topics ? JSON.stringify(topics) : null,
+            speakers ? JSON.stringify(speakers) : null,
+            activities ? JSON.stringify(activities) : null,
+            prizes ? JSON.stringify(prizes) : null,
+            criteria ? JSON.stringify(criteria) : null
+        ]);
+
+        const newId = result.rows[0].id;
+        console.log(`✅ Announcement created with ID: ${newId}`);
+        res.status(201).json({ success: true, message: 'تم إنشاء الإعلان بنجاح', data: { id: newId } });
+    } catch (err) {
+        console.error('❌ Error creating announcement:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في إنشاء الإعلان', error: err.message });
+    }
 });
 
-// Delete announcement (Admin only)
-router.delete('/:id', (req, res) => {
+// Update announcement
+router.put('/:id', async (req, res) => {
+    const announcementId = req.params.id;
+    const {
+        title, type, date, deadline, level, location, duration, field, prize,
+        description, details, requirements, benefits, topics, speakers,
+        activities, prizes, criteria, status
+    } = req.body;
+
+    console.log(`✏️ Updating announcement ${announcementId}...`);
+
+    try {
+        const result = await runSQL(`
+      UPDATE announcements 
+      SET title=$1, type=$2, date=$3, deadline=$4, level=$5, location=$6,
+          duration=$7, field=$8, prize=$9, description=$10, details=$11,
+          requirements=$12, benefits=$13, topics=$14, speakers=$15,
+          activities=$16, prizes=$17, criteria=$18, status=$19, updated_at=CURRENT_TIMESTAMP
+      WHERE id=$20
+    `, [
+            title, type, date, deadline || null, level || null, location || null,
+            duration || null, field || null, prize || null, description, details,
+            requirements ? JSON.stringify(requirements) : null,
+            benefits ? JSON.stringify(benefits) : null,
+            topics ? JSON.stringify(topics) : null,
+            speakers ? JSON.stringify(speakers) : null,
+            activities ? JSON.stringify(activities) : null,
+            prizes ? JSON.stringify(prizes) : null,
+            criteria ? JSON.stringify(criteria) : null,
+            status || 'active', announcementId
+        ]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: 'الإعلان غير موجود' });
+        }
+
+        console.log(`✅ Announcement ${announcementId} updated successfully`);
+        res.json({ success: true, message: 'تم تحديث الإعلان بنجاح' });
+    } catch (err) {
+        console.error('❌ Error updating announcement:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في تحديث الإعلان', error: err.message });
+    }
+});
+
+// Delete announcement
+router.delete('/:id', async (req, res) => {
     const announcementId = req.params.id;
     console.log(`🗑️ Deleting announcement ${announcementId}...`);
-    
-    const query = 'DELETE FROM announcements WHERE id = ?';
-    
-    db.run(query, [announcementId], function(err) {
-        if (err) {
-            console.error('❌ Error deleting announcement:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في حذف الإعلان',
-                error: err.message 
-            });
+
+    try {
+        const result = await runSQL('DELETE FROM announcements WHERE id = $1', [announcementId]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: 'الإعلان غير موجود' });
         }
-        
-        if (this.changes === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'الإعلان غير موجود' 
-            });
-        }
-        
+
         console.log(`✅ Announcement ${announcementId} deleted successfully`);
-        res.json({ 
-            success: true, 
-            message: 'تم حذف الإعلان بنجاح'
-        });
-    });
+        res.json({ success: true, message: 'تم حذف الإعلان بنجاح' });
+    } catch (err) {
+        console.error('❌ Error deleting announcement:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في حذف الإعلان', error: err.message });
+    }
 });
 
-// Get all announcements for admin (including inactive)
-router.get('/admin/all', (req, res) => {
+// Get all announcements for admin
+router.get('/admin/all', async (req, res) => {
     console.log('📢 Fetching all announcements for admin...');
-    
-    const query = `
-        SELECT id, title, type, date, deadline, level, location, duration, field, prize,
-               description, details, requirements, benefits, topics, speakers, 
-               activities, prizes, criteria, status, created_at, updated_at
-        FROM announcements 
-        ORDER BY created_at DESC
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('❌ Error fetching announcements for admin:', err.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'خطأ في جلب الإعلانات',
-                error: err.message 
-            });
-        }
-        
-        // Parse JSON fields
-        const announcements = rows.map(row => {
-            const announcement = { ...row };
-            
-            // Parse JSON fields if they exist
-            if (row.requirements) announcement.requirements = JSON.parse(row.requirements);
-            if (row.benefits) announcement.benefits = JSON.parse(row.benefits);
-            if (row.topics) announcement.topics = JSON.parse(row.topics);
-            if (row.speakers) announcement.speakers = JSON.parse(row.speakers);
-            if (row.activities) announcement.activities = JSON.parse(row.activities);
-            if (row.prizes) announcement.prizes = JSON.parse(row.prizes);
-            if (row.criteria) announcement.criteria = JSON.parse(row.criteria);
-            
-            return announcement;
-        });
-        
+    try {
+        const rows = await allSQL(`
+      SELECT id, title, type, date, deadline, level, location, duration, field, prize,
+             description, details, requirements, benefits, topics, speakers, 
+             activities, prizes, criteria, status, created_at, updated_at
+      FROM announcements 
+      ORDER BY created_at DESC
+    `);
+
+        const announcements = rows.map(row => ({
+            ...row,
+            requirements: row.requirements ? JSON.parse(row.requirements) : null,
+            benefits: row.benefits ? JSON.parse(row.benefits) : null,
+            topics: row.topics ? JSON.parse(row.topics) : null,
+            speakers: row.speakers ? JSON.parse(row.speakers) : null,
+            activities: row.activities ? JSON.parse(row.activities) : null,
+            prizes: row.prizes ? JSON.parse(row.prizes) : null,
+            criteria: row.criteria ? JSON.parse(row.criteria) : null
+        }));
+
         console.log(`✅ Found ${announcements.length} announcements for admin`);
-        res.json({ 
-            success: true, 
-            data: announcements,
-            count: announcements.length
-        });
-    });
+        res.json({ success: true, data: announcements, count: announcements.length });
+    } catch (err) {
+        console.error('❌ Error fetching announcements for admin:', err.message);
+        res.status(500).json({ success: false, message: 'خطأ في جلب الإعلانات', error: err.message });
+    }
 });
 
 module.exports = router;
